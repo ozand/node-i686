@@ -4,39 +4,52 @@ Node.js v22.19.0 compiled from source for **i686/x86 32-bit Linux** (Debian 12 b
 
 Official Node.js does not provide i686 binaries. This repo preserves hand-compiled builds.
 
-> **The binary is in [Releases →](https://github.com/ozand/node-i686/releases)**
+> **The binaries are in [Releases →](https://github.com/ozand/node-i686/releases)**
 > (GitHub stores large binaries in Releases, not in the file tree)
 
-## Quick download
+## Quick download — recommended build (small-icu)
 
 ```bash
-wget https://github.com/ozand/node-i686/releases/download/v22.19.0-i686-without-intl/node-v22.19.0-linux-i686-without-intl -O node
+wget https://github.com/ozand/node-i686/releases/download/v22.19.0-i686-small-icu/node-v22.19.0-linux-i686-small-icu -O node
 chmod +x node
-./node --version  # v22.19.0
+./node --version               # v22.19.0
+./node -e "console.log(process.versions.icu)"  # 77.1
 ```
-
-## Build info
-
-| Field | Value |
-|-------|-------|
-| Node version | v22.19.0 |
-| Arch | ia32 (i686) |
-| OS | Debian 12 bookworm, kernel 6.1.0-686-pae |
-| Build flags | `--openssl-no-asm --without-intl` |
-| SHA256 | `2314405cea6ffc84282cf05080ed9107296e6d07c84ddaf48b8da5a628c97bdc` |
-| Binary size | ~77 MB |
 
 ## Releases
 
-| Tag | ICU | Notes |
-|-----|-----|-------|
-| [v22.19.0-i686-without-intl](https://github.com/ozand/node-i686/releases/tag/v22.19.0-i686-without-intl) | ❌ none | First working build; `\p{}` regex not supported |
-| v22.19.0-i686-small-icu | ✅ small-icu | In progress — fixes Unicode property escapes for Pi CLI |
+| Tag | ICU | Binary size | SHA256 | Notes |
+|-----|-----|-------------|--------|-------|
+| [v22.19.0-i686-small-icu](https://github.com/ozand/node-i686/releases/tag/v22.19.0-i686-small-icu) | ✅ 77.1 | 86 MB | `8ee66d30684e9d01ae5667b23c3960d35084b628abe84b4f3c7daab559900d1b` | **Recommended** — Unicode regex `/v`, Pi CLI works |
+| [v22.19.0-i686-without-intl](https://github.com/ozand/node-i686/releases/tag/v22.19.0-i686-without-intl) | ❌ none | 77 MB | `2314405cea6ffc84282cf05080ed9107296e6d07c84ddaf48b8da5a628c97bdc` | First build; `\p{}` regex not supported |
 
-## Limitations of `without-intl` build
+## Build flags
 
-Built with `--without-intl`: V8 has no ICU data, so Unicode property escapes
-(`\p{Letter}`, `\p{Control}`, etc.) in regex are not supported.
-This breaks tools like [Pi coding agent](https://github.com/earendil-works/pi).
+### small-icu (recommended)
+```
+./configure --openssl-no-asm --with-intl=small-icu --dest-cpu=ia32
+```
+- Supports Unicode property escapes (`\p{L}`, `\p{Emoji}`, etc.)
+- Required for [Pi coding agent](https://github.com/earendil-works/pi)
+- **Patch**: removed `ia32` from `deps/zlib/zlib.gyp` SIMD chunk conditions (fixes `_mm_set1_epi64x` 64-bit intrinsic error)
 
-The `small-icu` build (currently compiling) will fix this.
+### without-intl (legacy)
+```
+./configure --openssl-no-asm --without-intl --dest-cpu=ia32
+```
+- No ICU data — Unicode property escapes not supported
+- `process.versions.icu === undefined`
+
+## Host info
+
+| Field | Value |
+|-------|-------|
+| OS | Debian 12 bookworm |
+| Kernel | 6.1.0-42-686-pae |
+| Arch | i686 |
+| Compiler | gcc 12 (i686-linux-gnu) |
+
+## See also
+
+- [BUILD.md](BUILD.md) — full build instructions and reproduce steps
+
